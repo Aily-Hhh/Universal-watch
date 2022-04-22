@@ -3,6 +3,8 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor, QFont
 from PyQt5.QtWidgets import QApplication
+
+import alarms_cl_db
 from UserInt.mainwindow import MainWindow
 
 app = QApplication(sys.argv)

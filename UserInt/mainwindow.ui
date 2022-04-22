@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>507</width>
+    <width>517</width>
     <height>362</height>
    </rect>
   </property>
@@ -27,6 +27,13 @@
     </item>
     <item>
      <widget class="QComboBox" name="timezone_cb"/>
+    </item>
+    <item>
+     <widget class="QPushButton" name="db_btn">
+      <property name="text">
+       <string>Мои будильники</string>
+      </property>
+     </widget>
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout">
@@ -81,16 +88,6 @@
      </layout>
     </item>
     <item>
-     <widget class="QLabel" name="time_remaining">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item>
      <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -102,6 +99,16 @@
        </size>
       </property>
      </spacer>
+    </item>
+    <item>
+     <widget class="QLabel" name="time_remaining">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QPushButton" name="audio_selection">

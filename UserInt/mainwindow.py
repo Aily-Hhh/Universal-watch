@@ -1,7 +1,14 @@
+import sqlite3
+from time import strftime
+
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt5.QtWidgets import QMainWindow, QButtonGroup, QSystemTrayIcon, QFileDialog
 from PyQt5.QtGui import QCloseEvent, QIcon
 from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent
 from PyQt5.QtMultimedia import QMediaPlaylist, QMediaPlayer, QMediaContent
+from sqlalchemy.sql.elements import Null
+
+import alarms_cl_db
 
 from UserInt.mainwindow_ui import Ui_MainWindow
 
@@ -43,10 +50,12 @@ class MainWindow(QMainWindow):
         self._button_group.addButton(self.ui.through_time_rb)
         self._button_group.buttonClicked.connect(self._update_states)
 
-        self.ui.start_stop.clicked.connect(self._start_stop)
+        self.ui.start.clicked.connect(self._start)
+        self.ui.stop.clicked.connect(self._stop)
         self.ui.more_sleep.clicked.connect(self._more_sleep)
         self.ui.i_woke_up.clicked.connect(self._i_woke_up)
         self.ui.audio_selection.clicked.connect(self._audio_selection)
+        self.ui.db_btn.clicked.connect(self._show_list)
 
         clock = QTimer(self)
         clock.timeout.connect(self.show_time)
@@ -61,7 +70,7 @@ class MainWindow(QMainWindow):
         self._timer_inc_volume.timeout.connect(self._inc_volume_tick)
 
         self._woke_up = False
-        self._alarm_time: QTime = None
+        self._alarm_time: QTime
 
         self.playlist = QMediaPlaylist()
         self.playlist.setPlaybackMode(QMediaPlaylist.Loop)
@@ -85,14 +94,15 @@ class MainWindow(QMainWindow):
         self.ui.more_sleep.setVisible(self._woke_up)
 
         if self._woke_up:
-            self.ui.start_stop.setChecked(False)
+            self.ui.start.setChecked(False)
 
-        self.ui.start_stop.setVisible(not self._woke_up)
+        self.ui.start.setVisible(not self._woke_up)
         self.ui.audio_selection.setVisible(not self._woke_up)
-        if self.ui.start_stop.isChecked():
-            self.ui.start_stop.setText('Отключить')
+        self.ui.stop.setVisible(not self._woke_up)
+        if self.ui.time_remaining == "":
+            self.ui.stop.setVisible(False)
         else:
-            self.ui.start_stop.setText('Установить')
+            self.ui.stop.setVisible(True)
 
         # Корректировка высоты окна после возможного скрытия кнопок
         self.resize(self.width(), self.minimumHeight())
@@ -122,22 +132,38 @@ class MainWindow(QMainWindow):
             mm, ss = divmod(mm, 60)
 
             alarm_str = self._alarm_time.toString('hh:mm:ss')
-            self.ui.time_remaining.setText(f"Установлен на {alarm_str}. Прозвенит через: {hh:0>2}:{mm:0>2}:{ss:0>2}")
+            self.ui.time_remaining.setText(f"Ближайший будильник установлен на {alarm_str}. Прозвенит через: {hh:0>2}:{mm:0>2}:{ss:0>2}")
 
     def _i_woke_up(self):
         self._woke_up = False
         self.player.stop()
         self._update_states()
         self.ui.time_remaining.setText("")
+        alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
+        self._call()
 
     def _start(self):
         self._woke_up = False
 
         if self.ui.at_time_rb.isChecked():
-            self._alarm_time = self.ui.at_time.time()
+            alarms_cl_db.List(self).create_new_record(self.ui.at_time.time().toString())
+
         elif self.ui.through_time_rb.isChecked():
             t = self.ui.through_time.time()
-            self._alarm_time = add_to_current_time(t)
+            self.call = add_to_current_time(t)
+            alarms_cl_db.List(self).create_new_record(self.call.toString())
+
+        self._call()
+
+    def _call(self):
+        query = QSqlQuery("alarm_clock_db.sqlite")
+        query.exec("""SELECT * FROM list ORDER BY al_time""")
+        query.next()
+        self._alarm_time = QTime.fromString(query.value('al_time'))
+        while query.next():
+            if query.value('al_time') > QTime.currentTime().toString():
+                self._alarm_time = QTime.fromString(query.value('al_time'))
+                break
 
         self._timer.start()
         self._update_states()
@@ -147,22 +173,27 @@ class MainWindow(QMainWindow):
         self._timer.stop()
         self._update_states()
         self.ui.time_remaining.setText("")
-
-    def _start_stop(self):
-        if self.ui.start_stop.isChecked():
-            self._start()
-        else:
-            self._stop()
+        alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
+        self._call()
 
     def _more_sleep(self):
         self._i_woke_up()
+        alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
 
         t = self.ui.through_time.time()
-        self._alarm_time = add_to_current_time(t)
+        self.call = add_to_current_time(t)
+        alarms_cl_db.List(self).create_new_record(self.call.toString())
+        self._call()
 
         self._timer.start()
-        self.ui.start_stop.setChecked(True)
+        self.ui.start.setChecked(True)
         self._update_states()
+
+    def _show_list(self):
+        if not alarms_cl_db.create_connection():
+            exit(1)
+        win = alarms_cl_db.List(self)
+        win.show()
 
     def _audio_selection(self):
         audio_filename, _ = QFileDialog.getOpenFileName(self)

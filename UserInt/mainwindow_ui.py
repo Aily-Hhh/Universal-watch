@@ -9,13 +9,13 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(507, 362)
+        MainWindow.resize(517, 362)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -23,8 +23,24 @@ class Ui_MainWindow(object):
         self.current_time = QtWidgets.QLabel(self.centralwidget)
         self.current_time.setAlignment(QtCore.Qt.AlignCenter)
         self.current_time.setObjectName("current_time")
-        self.current_time.setFont(QFont("Century Gothic", 23))
+        self.current_time.setFont(QFont("Century Gothic", 19))
         self.verticalLayout.addWidget(self.current_time)
+        self.timezone_cb = QtWidgets.QComboBox(self.centralwidget)
+        self.timezone_cb.setObjectName("timezone_cb")
+        self.verticalLayout.addWidget(self.timezone_cb)
+        self.time_remaining = QtWidgets.QLabel(self.centralwidget)
+        self.time_remaining.setText("")
+        self.time_remaining.setAlignment(QtCore.Qt.AlignCenter)
+        self.time_remaining.setObjectName("time_remaining")
+        self.time_remaining.setFont(QFont("Century Gothic", 8))
+        self.verticalLayout.addWidget(self.time_remaining)
+        self.stop = QtWidgets.QPushButton(self.centralwidget)
+        self.stop.setCheckable(True)
+        self.stop.setObjectName("stop")
+        self.verticalLayout.addWidget(self.stop)
+        self.db_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.db_btn.setObjectName("db_btn")
+        self.verticalLayout.addWidget(self.db_btn)
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.at_time_rb = QtWidgets.QRadioButton(self.centralwidget)
@@ -44,20 +60,15 @@ class Ui_MainWindow(object):
         self.through_time.setObjectName("through_time")
         self.gridLayout.addWidget(self.through_time, 1, 1, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
-        self.time_remaining = QtWidgets.QLabel(self.centralwidget)
-        self.time_remaining.setObjectName("time_remaining")
-        self.time_remaining.setFont(QFont("Century Gothic", 7))
-        self.verticalLayout.addWidget(self.time_remaining)
-        self.time_remaining.setAlignment(QtCore.Qt.AlignCenter)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
-        self.start_stop = QtWidgets.QPushButton(self.centralwidget)
-        self.start_stop.setCheckable(True)
-        self.start_stop.setObjectName("start_stop")
-        self.verticalLayout.addWidget(self.start_stop)
         self.audio_selection = QtWidgets.QPushButton(self.centralwidget)
         self.audio_selection.setObjectName("audio_selection")
         self.verticalLayout.addWidget(self.audio_selection)
+        self.start = QtWidgets.QPushButton(self.centralwidget)
+        self.start.setCheckable(True)
+        self.start.setObjectName("start")
+        self.verticalLayout.addWidget(self.start)
         self.i_woke_up = QtWidgets.QPushButton(self.centralwidget)
         self.i_woke_up.setObjectName("i_woke_up")
         self.verticalLayout.addWidget(self.i_woke_up)
@@ -71,17 +82,19 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Universal watch"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Будильник"))
         self.current_time.setText(_translate("MainWindow", "Time"))
+        self.db_btn.setText(_translate("MainWindow", "Мои будильники"))
         self.at_time_rb.setText(_translate("MainWindow", "Установить на"))
         self.at_time.setDisplayFormat(_translate("MainWindow", "HH:mm:ss"))
-        self.through_time_rb.setText(_translate("MainWindow", "Проснуться через / Отложить на"))
+        self.through_time_rb.setText(_translate("MainWindow", "Проснуться через"))
         self.through_time.setDisplayFormat(_translate("MainWindow", "HH:mm:ss"))
-        self.time_remaining.setText(_translate("MainWindow", ""))
-        self.start_stop.setText(_translate("MainWindow", "Установить"))
         self.audio_selection.setText(_translate("MainWindow", "Выбрать трек"))
+        self.start.setText(_translate("MainWindow", "Установить"))
+        self.stop.setText(_translate("MainWindow", "Отключить"))
         self.i_woke_up.setText(_translate("MainWindow", "Я проснулся"))
         self.more_sleep.setText(_translate("MainWindow", "Еще поспать"))
+        self.time_remaining.setText("")
 
 
 if __name__ == "__main__":

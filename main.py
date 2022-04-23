@@ -7,7 +7,6 @@ from UserInt.mainwindow import MainWindow
 
 
 app = QApplication(sys.argv)
-
 app.setFont(QFont("Century Gothic", 10))
 
 mw = MainWindow()

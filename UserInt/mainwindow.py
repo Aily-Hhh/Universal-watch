@@ -1,12 +1,13 @@
 import pytz
-from PyQt5.QtSql import QSqlQuery
-from PyQt5.QtWidgets import QMainWindow, QButtonGroup, QSystemTrayIcon, QFileDialog
-from PyQt5.QtGui import QCloseEvent, QIcon
-from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent, QTimeZone
-from PyQt5.QtMultimedia import QMediaPlaylist, QMediaPlayer, QMediaContent
-
 import alarms_cl_db
 import datetime
+
+from PyQt5.QtSql import QSqlQuery
+from PyQt5.QtWidgets import QMainWindow, QButtonGroup, \
+                            QSystemTrayIcon, QFileDialog
+from PyQt5.QtGui import QCloseEvent, QIcon
+from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent
+from PyQt5.QtMultimedia import QMediaPlaylist, QMediaPlayer, QMediaContent
 
 from UserInt.mainwindow_ui import Ui_MainWindow
 from config import SETTINGS_FILE_NAME, DIR_ICONS, DIR_MUSIC
@@ -155,7 +156,9 @@ class MainWindow(QMainWindow):
             mm, ss = divmod(mm, 60)
 
             alarm_str = self._alarm_time.toString('hh:mm:ss')
-            self.ui.time_remaining.setText(f"Ближайший будильник установлен на {alarm_str}. Прозвенит через: {hh:0>2}:{mm:0>2}:{ss:0>2}")
+            self.ui.time_remaining.setText(f"Ближайший будильник установлен"
+                                           f" на {alarm_str}. Прозвенит через:"
+                                           f" {hh:0>2}:{mm:0>2}:{ss:0>2}")
             self._update_states()
 
     def _i_woke_up(self):
@@ -170,7 +173,8 @@ class MainWindow(QMainWindow):
         self._woke_up = False
 
         if self.ui.at_time_rb.isChecked():
-            alarms_cl_db.List(self).create_new_record(self.ui.at_time.time().toString())
+            alarms_cl_db.List(self).create_new_record(
+                self.ui.at_time.time().toString())
 
         elif self.ui.through_time_rb.isChecked():
             t = self.ui.through_time.time()
@@ -189,12 +193,17 @@ class MainWindow(QMainWindow):
             self._alarm_time = QTime.fromString(query.value('al_time'))
             while query.next():
                 if self.ui.current_time.text() < query.value('al_time'):
-                    if self.ui.current_time.text() < self._alarm_time.toString() \
-                            and query.value('al_time') < self._alarm_time.toString():
-                        self._alarm_time = QTime.fromString(query.value('al_time'))
+                    if self.ui.current_time.text() < \
+                            self._alarm_time.toString() and \
+                            query.value('al_time') < \
+                            self._alarm_time.toString():
+                        self._alarm_time = QTime.fromString(
+                            query.value('al_time'))
                         break
-                    elif self.ui.current_time.text() > self._alarm_time.toString():
-                        self._alarm_time = QTime.fromString(query.value('al_time'))
+                    elif self.ui.current_time.text() > \
+                            self._alarm_time.toString():
+                        self._alarm_time = QTime.fromString(
+                            query.value('al_time'))
 
             self._timer.start()
             self._update_states()

@@ -35,7 +35,6 @@ class Ui_MainWindow(object):
         self.time_remaining.setFont(QFont("Century Gothic", 8))
         self.verticalLayout.addWidget(self.time_remaining)
         self.stop = QtWidgets.QPushButton(self.centralwidget)
-        self.stop.setCheckable(True)
         self.stop.setObjectName("stop")
         self.verticalLayout.addWidget(self.stop)
         self.db_btn = QtWidgets.QPushButton(self.centralwidget)

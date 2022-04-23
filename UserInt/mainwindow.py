@@ -1,13 +1,15 @@
+import pytz
 from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtWidgets import QMainWindow, QButtonGroup, QSystemTrayIcon, QFileDialog
 from PyQt5.QtGui import QCloseEvent, QIcon
-from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent
+from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent, QTimeZone
 from PyQt5.QtMultimedia import QMediaPlaylist, QMediaPlayer, QMediaContent
 
 import alarms_cl_db
+import datetime
 
 from UserInt.mainwindow_ui import Ui_MainWindow
-from config import SETTINGS_FILE_NAME, DIR_ICONS
+from config import SETTINGS_FILE_NAME, DIR_ICONS, DIR_MUSIC
 
 
 def get_total_seconds(t: QTime) -> int:
@@ -78,7 +80,7 @@ class MainWindow(QMainWindow):
         self.playlist = QMediaPlaylist()
         self.playlist.setPlaybackMode(QMediaPlaylist.Loop)
 
-        url = QUrl.fromLocalFile("music/Signals.mp3")
+        url = QUrl.fromLocalFile(str(DIR_MUSIC / 'Signals.mp3'))
         self.playlist.addMedia(QMediaContent(url))
         self.player = QMediaPlayer()
         self.player.setPlaylist(self.playlist)
@@ -87,10 +89,20 @@ class MainWindow(QMainWindow):
         self._call()
         self._update_states()
 
+        self.ui.timezone_cb.addItem("Local time")
+        self.ui.timezone_cb.addItems(pytz.common_timezones)
+        self.ui.timezone_cb.activated[str].connect(self.show_time)
+
     def show_time(self):
-        time = QTime.currentTime()
-        label = time.toString('hh:mm:ss')
-        self.ui.current_time.setText(label)
+        if self.ui.timezone_cb.currentText() == "Local time":
+            time = QTime.currentTime()
+            label = time.toString('hh:mm:ss')
+            self.ui.current_time.setText(label)
+        else:
+            timezone = pytz.timezone(f'{self.ui.timezone_cb.currentText()}')
+            time = datetime.datetime.now(timezone)
+            self.ui.current_time.setText(time.strftime("%H:%M:%S"))
+            self._call()
 
     def _update_states(self):
         self.ui.at_time.setEnabled(self.ui.at_time_rb.isChecked())
@@ -120,7 +132,12 @@ class MainWindow(QMainWindow):
         self.player.setVolume(self.player.volume() + 1)
 
     def _tick(self):
-        remain = QTime.currentTime().secsTo(self._alarm_time)
+        if self.ui.timezone_cb.currentText() != "Local time":
+            timezone = pytz.timezone(f'{self.ui.timezone_cb.currentText()}')
+            time_str = datetime.datetime.now(timezone).strftime("%H:%M:%S")
+            remain = QTime.fromString(time_str).secsTo(self._alarm_time)
+        else:
+            remain = QTime.currentTime().secsTo(self._alarm_time)
         if remain == 0:
             self._woke_up = True
             self._timer.stop()
@@ -164,7 +181,6 @@ class MainWindow(QMainWindow):
 
     def _call(self):
         count = count_record()
-        print(count)
 
         if count != 0:
             query = QSqlQuery("alarm_clock_db.sqlite")
@@ -172,12 +188,12 @@ class MainWindow(QMainWindow):
             query.next()
             self._alarm_time = QTime.fromString(query.value('al_time'))
             while query.next():
-                if QTime.currentTime().toString() < query.value('al_time'):
-                    if QTime.currentTime().toString() < self._alarm_time.toString() \
+                if self.ui.current_time.text() < query.value('al_time'):
+                    if self.ui.current_time.text() < self._alarm_time.toString() \
                             and query.value('al_time') < self._alarm_time.toString():
                         self._alarm_time = QTime.fromString(query.value('al_time'))
                         break
-                    elif QTime.currentTime().toString() > self._alarm_time.toString():
+                    elif self.ui.current_time.text() > self._alarm_time.toString():
                         self._alarm_time = QTime.fromString(query.value('al_time'))
 
             self._timer.start()
@@ -213,7 +229,7 @@ class MainWindow(QMainWindow):
         if audio_filename != '':
             url = QUrl.fromLocalFile(audio_filename)
         else:
-            url = QUrl.fromLocalFile("music/Signals.mp3")
+            url = QUrl.fromLocalFile(str(DIR_MUSIC / 'Signals.mp3'))
 
         self.playlist.clear()
         self.playlist.addMedia(QMediaContent(url))

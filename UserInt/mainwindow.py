@@ -1,17 +1,12 @@
-import sqlite3
-from time import strftime
-
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
+from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtWidgets import QMainWindow, QButtonGroup, QSystemTrayIcon, QFileDialog
 from PyQt5.QtGui import QCloseEvent, QIcon
 from PyQt5.QtCore import QTimer, QTime, QUrl, QSettings, QEvent
 from PyQt5.QtMultimedia import QMediaPlaylist, QMediaPlayer, QMediaContent
-from sqlalchemy.sql.elements import Null
 
 import alarms_cl_db
 
 from UserInt.mainwindow_ui import Ui_MainWindow
-
 from config import SETTINGS_FILE_NAME, DIR_ICONS
 
 
@@ -22,6 +17,14 @@ def get_total_seconds(t: QTime) -> int:
 def add_to_current_time(t: QTime) -> QTime:
     secs = get_total_seconds(t)
     return QTime.currentTime().addSecs(secs)
+
+
+def count_record():
+    query = QSqlQuery("alarm_clock_db.sqlite")
+    query.exec("""SELECT COUNT(*) FROM list WHERE id > 0""")
+    query.next()
+    count = query.record().value(0)
+    return count
 
 
 class MainWindow(QMainWindow):
@@ -80,6 +83,8 @@ class MainWindow(QMainWindow):
         self.player = QMediaPlayer()
         self.player.setPlaylist(self.playlist)
 
+        alarms_cl_db.List(self)
+        self._call()
         self._update_states()
 
     def show_time(self):
@@ -93,13 +98,14 @@ class MainWindow(QMainWindow):
         self.ui.i_woke_up.setVisible(self._woke_up)
         self.ui.more_sleep.setVisible(self._woke_up)
 
-        if self._woke_up:
-            self.ui.start.setChecked(False)
-
         self.ui.start.setVisible(not self._woke_up)
         self.ui.audio_selection.setVisible(not self._woke_up)
-        self.ui.stop.setVisible(not self._woke_up)
-        if self.ui.time_remaining == "":
+        self.ui.at_time.setVisible(not self._woke_up)
+        self.ui.at_time_rb.setVisible(not self._woke_up)
+        self.ui.through_time.setVisible(not self._woke_up)
+        self.ui.through_time_rb.setVisible(not self._woke_up)
+
+        if self.ui.time_remaining.text() == "":
             self.ui.stop.setVisible(False)
         else:
             self.ui.stop.setVisible(True)
@@ -118,8 +124,8 @@ class MainWindow(QMainWindow):
         if remain == 0:
             self._woke_up = True
             self._timer.stop()
-            self._update_states()
             self.ui.time_remaining.setText("")
+            self._update_states()
             self.player.setVolume(1)
             self.player.play()
             self._timer_inc_volume.start()
@@ -133,12 +139,13 @@ class MainWindow(QMainWindow):
 
             alarm_str = self._alarm_time.toString('hh:mm:ss')
             self.ui.time_remaining.setText(f"Ближайший будильник установлен на {alarm_str}. Прозвенит через: {hh:0>2}:{mm:0>2}:{ss:0>2}")
+            self._update_states()
 
     def _i_woke_up(self):
         self._woke_up = False
         self.player.stop()
-        self._update_states()
         self.ui.time_remaining.setText("")
+        self._update_states()
         alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
         self._call()
 
@@ -156,38 +163,43 @@ class MainWindow(QMainWindow):
         self._call()
 
     def _call(self):
-        query = QSqlQuery("alarm_clock_db.sqlite")
-        query.exec("""SELECT * FROM list ORDER BY al_time""")
-        query.next()
-        self._alarm_time = QTime.fromString(query.value('al_time'))
-        while query.next():
-            if query.value('al_time') > QTime.currentTime().toString():
-                self._alarm_time = QTime.fromString(query.value('al_time'))
-                break
+        count = count_record()
+        print(count)
 
-        self._timer.start()
-        self._update_states()
+        if count != 0:
+            query = QSqlQuery("alarm_clock_db.sqlite")
+            query.exec("""SELECT * FROM list ORDER BY al_time""")
+            query.next()
+            self._alarm_time = QTime.fromString(query.value('al_time'))
+            while query.next():
+                if QTime.currentTime().toString() < query.value('al_time'):
+                    if QTime.currentTime().toString() < self._alarm_time.toString() \
+                            and query.value('al_time') < self._alarm_time.toString():
+                        self._alarm_time = QTime.fromString(query.value('al_time'))
+                        break
+                    elif QTime.currentTime().toString() > self._alarm_time.toString():
+                        self._alarm_time = QTime.fromString(query.value('al_time'))
+
+            self._timer.start()
+            self._update_states()
+        else:
+            self.ui.time_remaining.setText("")
+            self._update_states()
 
     def _stop(self):
-        self._woke_up = False
         self._timer.stop()
-        self._update_states()
         self.ui.time_remaining.setText("")
+        self._update_states()
         alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
         self._call()
 
     def _more_sleep(self):
         self._i_woke_up()
-        alarms_cl_db.List(self).delete_record(self._alarm_time.toString())
 
         t = self.ui.through_time.time()
         self.call = add_to_current_time(t)
         alarms_cl_db.List(self).create_new_record(self.call.toString())
         self._call()
-
-        self._timer.start()
-        self.ui.start.setChecked(True)
-        self._update_states()
 
     def _show_list(self):
         if not alarms_cl_db.create_connection():

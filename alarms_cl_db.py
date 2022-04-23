@@ -1,13 +1,7 @@
-import sys
-import sqlite3
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QTime
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel, QSqlRecord
+from PyQt5 import QtCore
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PyQt5.QtWidgets import (
-    QMainWindow,
-    QMessageBox,
-    QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QTableView, QDialog, QAbstractItemView
+    QMessageBox, QVBoxLayout, QTableView, QDialog, QAbstractItemView
 )
 
 

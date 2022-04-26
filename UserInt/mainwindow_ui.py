@@ -58,8 +58,6 @@ class Ui_MainWindow(object):
         self.through_time.setObjectName("through_time")
         self.gridLayout.addWidget(self.through_time, 1, 1, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem)
         self.audio_selection = QtWidgets.QPushButton(self.centralwidget)
         self.audio_selection.setObjectName("audio_selection")
         self.verticalLayout.addWidget(self.audio_selection)
@@ -72,6 +70,8 @@ class Ui_MainWindow(object):
         self.more_sleep = QtWidgets.QPushButton(self.centralwidget)
         self.more_sleep.setObjectName("more_sleep")
         self.verticalLayout.addWidget(self.more_sleep)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)

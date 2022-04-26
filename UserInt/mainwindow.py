@@ -63,16 +63,19 @@ class MainWindow(QMainWindow):
         self.ui.audio_selection.clicked.connect(self._audio_selection)
         self.ui.db_btn.clicked.connect(self._show_list)
 
+        # таймер для циферблата
         clock = QTimer(self)
         clock.timeout.connect(self.show_time)
         clock.start(100)
 
+        # таймер для будильника
         self._timer = QTimer()
         self._timer.setInterval(100)
         self._timer.timeout.connect(self._tick)
 
+        # таймер для повышения громкости мелодии
         self._timer_inc_volume = QTimer()
-        self._timer_inc_volume.setInterval(100)
+        self._timer_inc_volume.setInterval(1000)
         self._timer_inc_volume.timeout.connect(self._inc_volume_tick)
 
         self._woke_up = False
@@ -94,6 +97,7 @@ class MainWindow(QMainWindow):
         self.ui.timezone_cb.addItems(pytz.common_timezones)
         self.ui.timezone_cb.activated[str].connect(self.show_time)
 
+    # время на циферблате
     def show_time(self):
         if self.ui.timezone_cb.currentText() == "Local time":
             time = QTime.currentTime()
@@ -115,8 +119,6 @@ class MainWindow(QMainWindow):
         self.ui.audio_selection.setVisible(not self._woke_up)
         self.ui.at_time.setVisible(not self._woke_up)
         self.ui.at_time_rb.setVisible(not self._woke_up)
-        self.ui.through_time.setVisible(not self._woke_up)
-        self.ui.through_time_rb.setVisible(not self._woke_up)
 
         if self.ui.time_remaining.text() == "":
             self.ui.stop.setVisible(False)
@@ -183,6 +185,7 @@ class MainWindow(QMainWindow):
 
         self._call()
 
+    # установка ближайшего будильникаdd
     def _call(self):
         count = count_record()
 
